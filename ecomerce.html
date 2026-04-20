@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>e-comerce</title>
+  <style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --t-primary:#1F2936;
+    --t-placeholder:#798EAE;
+    --bg-primary:#f9fafb;
+    --bg-secondary:#ECECFD;
+    --bg-sidebar:#FFFFFF;
+    --border-hr:#E2E8F0;
+    --hover-primary:#695CFE;
+    --hover-secondry:#e2e2fb;
+    --shadow:rgba(0,0,0,0.5);
+    --brand:#22c55e;
+    --brand-2:#06b6d4;
+  }
+  body{background:var(--bg-primary);}
+  header{align-items:center;padding:10px 20px 10px 10px;border-bottom:3px solid var(--border-hr);box-shadow:0 4px 8px var(--shadow);
+    position:sticky;top:0;left:0;display:flex;background:var(--bg-secondary);justify-content:space-between;}
+  .logo{font-weight:700;font-size:18px;letter-spacing:.5px;}
+  nav a{padding:7px;text-decoration:none;}
+  .cartBtn{background:var(--bg-sidebar);position:relative;padding:6px 9px;border-radius:50px;cursor:pointer;font-weight:700;}
+  nav .cartBtn span{position:absolute;top:-6px;background:var(--brand);right:-6px; border-radius:999px;padding:2px;}
+  .hero, .products{padding:50px 20px;}
+  .button{background:linear-gradient(90deg,var(--brand),var(--brand-2));border:none;padding:14px 20px;margin:15px 0;border-radius:10px;cursor:pointer;}
+  .products h2{text-align:center;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(200px,1fr));gap:20px;margin:20px 0;}
+  .card img{width:100%;}
+  .card{background:#fff;box-shadow:0 4px 8px var(--shadow);padding:20px;border-radius:9px;}
+  h3{color:green;font-weight:450;}
+  .card button{width:100%;padding:7px;border-radius:9px;margin-top:5px;border:0;cursor:pointer;}
+  aside{flex-direction:column;padding:0 20px;transition:.7s ease;
+    position:fixed;top:0;right:-400px;height:100vh;width:400px;box-shadow:0 0px 8px var(--shadow);background:var(--bg-secondary);display:flex;}
+  aside.open{right:0;}
+  aside header{box-shadow:0 2px 8px white;}
+  .cartItem{flex:1;}
+  aside h2{border-top:1px solid black;padding:10px 0 0 0;}
+  #modal{z-index:30;position:fixed;inset:0;display:none;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;}
+  #modal.open{display:flex;}
+  .modalContent{background:rgba(0,50,255);color:white;width:70%;padding:20px;display:flex;border-radius:9px;flex-direction:column;gap:10px;}
+  .modalContent input{border-radius:9px;padding:10px;outline:0;}
+  .cartContent{display:flex;align-items:center;gap:20px;border-bottom:3px solid white;padding:20px 6px;}
+  .cartContent img{width:60px;}
+  .cartContent span{display:flex;gap:10px;margin-top:5px;}
+  .cartContent span button{padding:2px 8px;border:0;background:#fff;border-radius:2px;cursor:pointer}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">hornCode shop</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#products">Products</a>
+      <a href="#contact">Contact</a>
+      <span class="cartBtn" onclick="openCart()">🛒<span id="budget" class="budget">0</span></span>
+    </nav>
+  </header>
+  
+  <section class="hero">
+    <h1>Sell Faster with a Modern Store</h1>
+    <p>Fully responsive, animated UI, cart & checkout included. Ready for your clients.</p>
+    <button class="button">Shop Now</button>
+  </section>
+  
+  <section class="products">
+    <h2>Products</h2>
+    <div id="products" class="grid"></div>
+  </section>
+  
+  <aside id="cart">
+    <header>
+      <div class="logo">Your cart</div>
+      <div class="cartBtn" onclick="openCart()">close</div>
+    </header>
+    <div class="cartItem" id="cartItem"></div>
+    <h2>total: $<span id="total">0</span></h2>
+    <button class="button" onclick="openModal()">checkout</button>
+  </aside>
+  
+  <div id="modal">
+    <div class="modalContent">
+      <h2>Check out</h2>
+      <input type="text" placeholder="full name" required="">
+      <input type="email" placeholder="email / phone" required="">
+      <input type="text" placeholder="address" required="">
+      <button type="submit" class="button" onclick="closeModal()">Checkout</button>
+    </div>
+  </div>
+  
+  <footer></footer>
+  <script>
+  const products = [
+  {id:1, name:"shoes", price:150, image:"shoes.jpg"},
+  {id:2, name:"Head Phone", price:60, image:"headphone.jpg"},
+  {id:3, name:"shirt", price:200, image:"shirt.jpg"},
+  {id:4, name:"phone", price:450, image:"phone.jpg"},
+  ]
+  let cart = [];
+  let total = 0;
+  const productCon = document.getElementById("products");
+  const cartCon = document.getElementById("cart");
+  const cartItem = document.getElementById("cartItem");
+  const modal = document.getElementById("modal");
+  const budget = document.getElementById("budget");
+  const totalElem = document.getElementById("total");
+  function renderApp(){
+    products.forEach(p=>{
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+      <img src="${p.image}">
+      <p>${p.name}</p>
+      <h3>$ ${p.price}</h3>
+      <button onclick=addToCart(${p.id})>Add to cart</button>
+      `
+      productCon.appendChild(card);
+    });
+  }
+  function addToCart(id){
+    const item = cart.find(i=> i.id === id);
+    if(item){
+      item.qty++;
+    }else{
+      const p = products.find(i=>i.id===id);
+      cart.push({...p, qty:1})
+    }
+    renderCart();
+  }
+  function renderCart(){
+    
+    cartItem.innerHTML = "";
+    total = 0;
+    let count = 0;
+    
+    cart.forEach(i=>{
+      
+      total+=i.qty*i.price;
+      count+=i.qty;
+      const div=document.createElement("div");
+      div.className="cartContent";
+      div.innerHTML = `
+      <img src="${i.image}">
+      <div>
+      <p>${i.name}</p>
+      <h3>${i.price}</h3>
+      <span>
+  <button onclick="changeQty(${i.id}, 'dec')">-</button>
+  ${i.qty}
+  <button onclick="changeQty(${i.id}, 'inc')">+</button>
+  <button onclick="removeItem(${i.id})">x</button>
+</span>
+      </div>
+      `
+      cartItem.appendChild(div);
+    });
+    budget.innerHTML = count;
+    totalElem.innerHTML = total;
+  }
+  function openCart(){
+    cartCon.classList.toggle("open");
+  }
+  function openModal(){
+    const c = confirm("are you sure  to pay  $" + total);
+    if(!c){return}
+    modal.classList.add("open");
+  }
+  function closeModal(){
+    
+    modal.classList.remove("open");
+    alert("you paid $" + total);
+    cart = [];
+renderCart();
+openCart();
+  }
+  function changeQty(id, type){
+  const item = cart.find(i => i.id === id);
+  if(!item) return;
+
+  if(type === "inc"){
+    item.qty++;
+  } else if(type === "dec"){
+    item.qty--;
+    if(item.qty <= 0){
+      cart = cart.filter(i => i.id !== id);
+    }
+  }
+
+  renderCart();
+}
+
+function removeItem(id){
+  cart = cart.filter(i => i.id !== id);
+  renderCart();
+}
+  renderApp();
+  renderCart();
+  </script>
+</body>
+</html>
